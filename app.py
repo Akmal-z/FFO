@@ -1,45 +1,40 @@
-# app.py
-
 import streamlit as st
 import pandas as pd
-from data_loader import load_dataset
 from ffo import firefly_optimization
+from config import DEPARTMENTS, SHIFT_LENGTH
 
-st.set_page_config(layout="wide")
-st.title("🔥 FFO – Monte Carlo Staff Scheduling")
+st.title("FFO – Staff Scheduling (6 Departments)")
 
-# Load data
-demand_matrix = load_dataset()
-st.subheader("Monte Carlo Demand Matrix")
-st.dataframe(demand_matrix)
+# Example demand (boleh ganti dengan dataset sebenar)
+demand = st.number_input(
+    "Daily demand per department",
+    min_value=1,
+    value=6
+)
 
-# Sidebar
-day = st.sidebar.selectbox("Select Day", demand_matrix.index)
-pop = st.sidebar.slider("Population Size", 5, 30, 15)
-iters = st.sidebar.slider("Iterations", 20, 200, 100)
-alpha = st.sidebar.slider("Alpha", 0.0, 1.0, 0.3)
-beta = st.sidebar.slider("Beta", 0.1, 1.0, 0.6)
+demand_vector = [demand] * 6
 
-demand = demand_matrix.loc[day].values
+pop = st.slider("Population", 5, 30, 15)
+iters = st.slider("Iterations", 50, 300, 100)
+alpha = st.slider("Alpha", 0.0, 1.0, 0.3)
+beta = st.slider("Beta", 0.1, 1.0, 0.6)
 
 if st.button("Run FFO"):
-    solution, history, metrics = firefly_optimization(
-        demand, pop, iters, alpha, beta
+    best, history, metrics = firefly_optimization(
+        demand_vector, pop, iters, alpha, beta
     )
 
-    st.success("Best BALANCED solution selected")
-
-    st.subheader("Penalty Breakdown")
+    st.subheader("Best BALANCED Solution")
     st.write(metrics)
 
-    st.subheader(f"Schedule for Day {day}")
-    result = pd.DataFrame({
-        "Time Period": range(1, len(demand)+1),
-        "Demand": demand,
-        "Staff Assigned": solution,
-        "Deviation": abs(solution - demand)
-    })
-    st.dataframe(result)
+    table = []
+    for i, s in enumerate(best):
+        table.append({
+            "Department": i + 1,
+            "Staff Assigned": s,
+            "Shift Length (period)": SHIFT_LENGTH,
+            "Total Working Hours": SHIFT_LENGTH * 0.5
+        })
 
-    st.subheader("Global Fitness Convergence")
+    st.dataframe(pd.DataFrame(table))
     st.line_chart(history)
