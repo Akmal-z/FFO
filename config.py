@@ -1,8 +1,9 @@
-# config.py
-
-SHIFT_LENGTH = 1      # per time period
+PERIODS = 28
+SHIFT_LENGTH = 14
 MIN_STAFF = 6
 
-W_DEVIATION = 20
-W_WORKLOAD = 3
+DEPARTMENTS = [1, 2, 3, 4, 5, 6]
+
+W_SHORTAGE = 20
+W_WORKLOAD = 5
 W_MINSTAFF = 30
