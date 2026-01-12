@@ -1,35 +1,28 @@
-# fitness.py
-
 import numpy as np
-from config import *
+from config import SHIFT_LENGTH, MIN_STAFF, W_SHORTAGE, W_WORKLOAD, W_MINSTAFF
 
-def evaluate_firefly(solution, demand):
-    """
-    solution: staff assigned per time period
-    demand  : demand per time period
-    """
+def evaluate_firefly(staff, demand):
+    staff = np.array(staff)
 
-    # Deviation (hard)
-    deviation = np.abs(solution - demand)
-    deviation_penalty = np.sum(deviation) * W_DEVIATION
+    # HARD 1: Shortage
+    shortage = np.maximum(0, demand - staff)
+    P_shortage = np.sum(shortage) * W_SHORTAGE
 
-    # Workload balance (hard)
-    avg = np.mean(solution)
-    workload_penalty = np.sum(np.abs(solution - avg)) * W_WORKLOAD
+    # HARD 2: Workload balance
+    workload = staff * SHIFT_LENGTH
+    avg = np.mean(workload)
+    P_workload = np.sum(np.abs(workload - avg)) * W_WORKLOAD
 
-    # Soft: minimum staff
-    min_staff_penalty = 0
-    if np.sum(solution) < MIN_STAFF:
-        min_staff_penalty = (MIN_STAFF - np.sum(solution)) * W_MINSTAFF
+    # SOFT: Minimum staff
+    total_staff = np.sum(staff)
+    P_soft = 0
+    if total_staff < MIN_STAFF:
+        P_soft = (MIN_STAFF - total_staff) * W_MINSTAFF
 
-    global_fitness = (
-        deviation_penalty +
-        workload_penalty +
-        min_staff_penalty
-    )
+    global_fitness = P_shortage + P_workload + P_soft
 
     return {
         "global": global_fitness,
-        "deviation": deviation_penalty,
-        "workload": workload_penalty
+        "shortage": P_shortage,
+        "workload": P_workload
     }
